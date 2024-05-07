@@ -13,15 +13,17 @@ type Options = {
 	algorithm?: TOTPAlgorithm
 	period?: number
 	timestamp?: number
+	keyIsHex?: boolean
 }
 
 export class TOTP {
+
 	static generate(key: string, options?: Options) {
-		const _options: Required<Options> = { digits: 6, algorithm: "SHA-1", period: 30, timestamp: Date.now(), ...options }
+		const _options: Required<Options> = { digits: 6, algorithm: "SHA-1", period: 30, timestamp: Date.now(), keyIsHex: false, ...options }
 		const epoch = Math.floor(_options.timestamp / 1000.0)
 		const time = this.leftpad(this.dec2hex(Math.floor(epoch / _options.period)), 16, "0")
 		const shaObj = new JsSHA(_options.algorithm, "HEX")
-		shaObj.setHMACKey(this.base32tohex(key), "HEX")
+		shaObj.setHMACKey(_options.keyIsHex ? key : this.base32tohex(key), "HEX")
 		shaObj.update(time)
 		const hmac = shaObj.getHMAC("HEX")
 		const offset = this.hex2dec(hmac.substring(hmac.length - 1))
